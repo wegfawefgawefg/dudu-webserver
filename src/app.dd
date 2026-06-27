@@ -1,0 +1,56 @@
+from request import Request
+from response import Response
+from response import response
+import c "time.h" as time
+import cpp "string" as std
+
+
+def json_escape(value: std.string) -> std.string:
+    # This demo only needs names without quotes for apples-to-apples benchmarks.
+    return value
+
+
+def time_json() -> std.string:
+    now = time.time(None)
+    tm: time.tm
+    time.gmtime_r(&now, &tm)
+    buffer: array[char][32]
+    time.strftime(&buffer[0], 32, "%Y-%m-%dT%H:%M:%SZ", &tm)
+    out = std.string("{\"epoch\":\"")
+    out += std.to_string(now)
+    out += std.string("\",\"utc\":\"")
+    out += std.string(&buffer[0])
+    out += std.string("\"}")
+    return out
+
+
+def html_index() -> std.string:
+    return std.string("<!doctype html><html><head><meta charset=\"utf-8\"><title>dudu-webserver</title></head><body><h1>dudu-webserver</h1><ul><li><a href=\"/health\">/health</a></li><li><a href=\"/time\">/time</a></li><li><a href=\"/echo?name=vega\">/echo?name=vega</a></li><li><a href=\"/routes\">/routes</a></li></ul></body></html>")
+
+
+def handle_request(request: Request) -> Response:
+    if request.method != std.string("GET"):
+        return response(405, std.string("application/json"), std.string("{\"error\":\"method_not_allowed\"}"))
+
+    if request.path == std.string("/"):
+        return response(200, std.string("text/html; charset=utf-8"), html_index())
+
+    if request.path == std.string("/health"):
+        return response(200, std.string("application/json"), std.string("{\"language\":\"Dudu\",\"ok\":true}"))
+
+    if request.path == std.string("/time"):
+        return response(200, std.string("application/json"), time_json())
+
+    if request.path == std.string("/echo"):
+        name = request.name
+        if name.empty():
+            name = std.string("somebody")
+        body = std.string("{\"message\":\"hello, ")
+        body += json_escape(name)
+        body += std.string("\"}")
+        return response(200, std.string("application/json"), body)
+
+    if request.path == std.string("/routes"):
+        return response(200, std.string("application/json"), std.string("{\"routes\":[\"GET /\",\"GET /echo\",\"GET /health\",\"GET /routes\",\"GET /time\"]}"))
+
+    return response(404, std.string("application/json"), std.string("{\"error\":\"not_found\"}"))

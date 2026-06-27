@@ -1,3 +1,4 @@
 build/
+src/.dudu_native_headers_*
 *.log
 .DS_Store

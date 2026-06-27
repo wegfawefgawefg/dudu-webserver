@@ -1,0 +1,76 @@
+import cpp "string" as std
+
+
+class Request:
+    method: std.string
+    target: std.string
+    path: std.string
+    name: std.string
+
+
+def string_npos() -> usize:
+    return cpp("std::string::npos")
+
+
+def find_in(text: std.string, needle: std.string) -> usize:
+    return text.find(needle)
+
+
+def substr_from(text: std.string, start: usize) -> std.string:
+    return text.substr(start)
+
+
+def substr_range(text: std.string, start: usize, count: usize) -> std.string:
+    return text.substr(start, count)
+
+
+def url_decode(input: std.string) -> std.string:
+    # Enough for the benchmark and simple browser route tests.
+    output: std.string
+    for index: usize in range(input.size()):
+        code = input[index]
+        if code == char(43):
+            output.push_back(char(32))
+        else:
+            output.push_back(code)
+    return output
+
+
+def parse_name_query(query: std.string) -> std.string:
+    prefix = std.string("name=")
+    if query.rfind(prefix, 0) == 0:
+        return url_decode(substr_from(query, prefix.size()))
+    return std.string()
+
+
+def split_target(target: std.string) -> Request:
+    question = find_in(target, std.string("?"))
+    path = target
+    name: std.string
+    if question != string_npos():
+        path = substr_range(target, 0, question)
+        query = substr_from(target, question + 1)
+        name = parse_name_query(query)
+    return Request(method=std.string("GET"), target=target, path=path, name=name)
+
+
+def parse_request(raw: std.string) -> Request:
+    line_end = find_in(raw, std.string("\r\n"))
+    if line_end == string_npos():
+        return Request(method=std.string(), target=std.string(), path=std.string(), name=std.string())
+
+    first_line = substr_range(raw, 0, line_end)
+    first_space = find_in(first_line, std.string(" "))
+    if first_space == string_npos():
+        return Request(method=std.string(), target=std.string(), path=std.string(), name=std.string())
+
+    rest = substr_from(first_line, first_space + 1)
+    second_space = find_in(rest, std.string(" "))
+    if second_space == string_npos():
+        return Request(method=std.string(), target=std.string(), path=std.string(), name=std.string())
+
+    method = substr_range(first_line, 0, first_space)
+    target = substr_range(rest, 0, second_space)
+    request = split_target(target)
+    request.method = method
+    return request

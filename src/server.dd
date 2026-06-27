@@ -1,0 +1,95 @@
+from app import handle_request
+from request import parse_request
+from request import string_npos
+from response import serialize_response
+import c "arpa/inet.h" as inet
+import c "netinet/in.h" as net
+import c "poll.h" as poll
+import c "stdlib.h" as c
+import c "string.h" as cstrlib
+import c "sys/socket.h" as sock
+import c "unistd.h" as unistd
+import cpp "string" as std
+
+
+def parse_port() -> i32:
+    port_text = c.getenv("PORT")
+    if port_text != None:
+        parsed: i32 = cpp("std::atoi(port_text)")
+        if parsed > 0:
+            return parsed
+    return 8080
+
+
+def read_http_request(fd: i32) -> std.string:
+    raw: std.string
+    buffer: array[char][1024]
+    done = False
+    while not done and raw.size() < 16384:
+        count = sock.recv(fd, &buffer[0], 1024, 0)
+        if count <= 0:
+            done = True
+        else:
+            cpp("raw.append(buffer.data(), static_cast<std::size_t>(count));")
+            if raw.find(std.string("\r\n\r\n")) != string_npos():
+                done = True
+    return raw
+
+
+def send_all(fd: i32, text: std.string):
+    cpp("::send(fd, static_cast<const void*>(text.c_str()), text.size(), MSG_NOSIGNAL);")
+
+
+def serve_client(fd: i32):
+    raw = read_http_request(fd)
+    req = parse_request(raw)
+    res = handle_request(req)
+    wire = serialize_response(res)
+    send_all(fd, wire)
+
+
+def make_server(port: i32) -> i32:
+    server = sock.socket(sock.AF_INET, sock.SOCK_STREAM, 0)
+    if server < 0:
+        return -1
+
+    yes: i32 = 1
+    cpp("::setsockopt(server, SOL_SOCKET, SO_REUSEADDR, static_cast<const void*>(&yes), static_cast<socklen_t>(sizeof(yes)));")
+
+    address: net.sockaddr_in
+    cstrlib.memset(&address, 0, sizeof[net.sockaddr_in]())
+    address.sin_family = u16(sock.AF_INET)
+    address.sin_port = net.htons(u16(port))
+    if inet.inet_pton(sock.AF_INET, "127.0.0.1", &address.sin_addr) != 1:
+        unistd.close(server)
+        return -1
+
+    bind_status: i32 = cpp("::bind(server, reinterpret_cast<sockaddr*>(&address), sizeof(address))")
+    if bind_status < 0:
+        unistd.close(server)
+        return -1
+
+    if sock.listen(server, 64) < 0:
+        unistd.close(server)
+        return -1
+
+    return server
+
+
+def run_server(server: i32):
+    while True:
+        server_poll: poll.pollfd
+        server_poll.fd = server
+        server_poll.events = i16(poll.POLLIN)
+        server_poll.revents = i16(0)
+
+        poll_result = poll.poll(&server_poll, 1, 200)
+        if poll_result <= 0:
+            continue
+        if (server_poll.revents & i16(poll.POLLIN)) == i16(0):
+            continue
+
+        client = sock.accept(server, None, None)
+        if client >= 0:
+            serve_client(client)
+            unistd.close(client)

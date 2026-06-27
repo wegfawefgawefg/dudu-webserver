@@ -1,0 +1,39 @@
+import cpp "string" as std
+
+
+class Response:
+    status: i32
+    content_type: std.string
+    body: std.string
+
+
+def response(status: i32, content_type: std.string, body: std.string) -> Response:
+    return Response(status=status, content_type=content_type, body=body)
+
+
+def status_text(status: i32) -> std.string:
+    if status == 200:
+        return std.string("OK")
+    if status == 404:
+        return std.string("Not Found")
+    if status == 405:
+        return std.string("Method Not Allowed")
+    return std.string("OK")
+
+
+def serialize_response(res: Response) -> std.string:
+    out = std.string("HTTP/1.1 ")
+    out += std.to_string(res.status)
+    out += std.string(" ")
+    out += status_text(res.status)
+    out += std.string("\r\n")
+    out += std.string("Server: dudu-webserver\r\n")
+    out += std.string("Connection: close\r\n")
+    out += std.string("Content-Type: ")
+    out += res.content_type
+    out += std.string("\r\n")
+    out += std.string("Content-Length: ")
+    out += std.to_string(u64(res.body.size()))
+    out += std.string("\r\n\r\n")
+    out += res.body
+    return out
