@@ -5,7 +5,10 @@ entry = "src/main.dd"
 standard = "c++20"
 
 [include]
-paths = ["include"]
+paths = []
+
+[cc]
+flags = ["-O3", "-DNDEBUG"]
 
 [build]
 dir = "build"
