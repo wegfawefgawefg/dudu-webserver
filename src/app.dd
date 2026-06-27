@@ -28,26 +28,50 @@ def html_index() -> std.string:
     return std.string("<!doctype html><html><head><meta charset=\"utf-8\"><title>dudu-webserver</title></head><body><h1>dudu-webserver</h1><ul><li><a href=\"/health\">/health</a></li><li><a href=\"/time\">/time</a></li><li><a href=\"/echo?name=vega\">/echo?name=vega</a></li><li><a href=\"/routes\">/routes</a></li></ul></body></html>")
 
 
+def index_route(request: Request) -> Response:
+    return response(200, std.string("text/html; charset=utf-8"), html_index())
+
+
+def health_route(request: Request) -> Response:
+    return response(200, std.string("application/json"), std.string("{\"language\":\"Dudu\",\"ok\":true}"))
+
+
+def time_route(request: Request) -> Response:
+    return response(200, std.string("application/json"), time_json())
+
+
+def echo_route(request: Request) -> Response:
+    name = request.name
+    if name.empty():
+        name = std.string("somebody")
+    body = std.string("{\"message\":\"hello, ")
+    body += json_escape(name)
+    body += std.string("\"}")
+    return response(200, std.string("application/json"), body)
+
+
+def routes_route(request: Request) -> Response:
+    return response(200, std.string("application/json"), std.string("{\"routes\":[\"GET /\",\"GET /echo\",\"GET /health\",\"GET /routes\",\"GET /time\"]}"))
+
+
+def not_found_route(request: Request) -> Response:
+    return response(404, std.string("application/json"), std.string("{\"error\":\"not_found\"}"))
+
+
 def handle_request(request: Request) -> Response:
     if request.method != std.string("GET"):
         return response(405, std.string("application/json"), std.string("{\"error\":\"method_not_allowed\"}"))
 
     match request.path:
         case "/":
-            return response(200, std.string("text/html; charset=utf-8"), html_index())
+            return index_route(request)
         case "/health":
-            return response(200, std.string("application/json"), std.string("{\"language\":\"Dudu\",\"ok\":true}"))
+            return health_route(request)
         case "/time":
-            return response(200, std.string("application/json"), time_json())
+            return time_route(request)
         case "/echo":
-            name = request.name
-            if name.empty():
-                name = std.string("somebody")
-            body = std.string("{\"message\":\"hello, ")
-            body += json_escape(name)
-            body += std.string("\"}")
-            return response(200, std.string("application/json"), body)
+            return echo_route(request)
         case "/routes":
-            return response(200, std.string("application/json"), std.string("{\"routes\":[\"GET /\",\"GET /echo\",\"GET /health\",\"GET /routes\",\"GET /time\"]}"))
+            return routes_route(request)
         case _:
-            return response(404, std.string("application/json"), std.string("{\"error\":\"not_found\"}"))
+            return not_found_route(request)
