@@ -1,0 +1,11 @@
+name = "dudu-webserver"
+entry = "src/main.dd"
+
+[cxx]
+standard = "c++20"
+
+[include]
+paths = ["include"]
+
+[build]
+dir = "build"

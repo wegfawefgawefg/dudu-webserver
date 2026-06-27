@@ -1,0 +1,46 @@
+import cpp "dudu_http.hpp"
+import cpp "string" as std
+
+
+def parse_port() -> i32:
+    return cpp("httplib::env_port_or(8080)")
+
+
+def handle_index(req: httplib.Request, res: &httplib.Response):
+    res.set_content(
+        "<!doctype html><html><head><meta charset=\"utf-8\"><title>dudu-webserver</title></head><body><h1>dudu-webserver</h1><ul><li><a href=\"/health\">/health</a></li><li><a href=\"/time\">/time</a></li><li><a href=\"/echo?name=vega\">/echo?name=vega</a></li><li><a href=\"/routes\">/routes</a></li></ul></body></html>",
+        "text/html; charset=utf-8",
+    )
+
+
+def handle_health(req: httplib.Request, res: &httplib.Response):
+    res.set_content("{\"language\":\"Dudu\",\"ok\":true}", "application/json")
+
+
+def handle_time(req: httplib.Request, res: &httplib.Response):
+    res.set_content(cpp("httplib::time_json()"), "application/json")
+
+
+def handle_echo(req: httplib.Request, res: &httplib.Response):
+    name = req.get_param_value("name")
+    if name.empty():
+        name = std.string("somebody")
+    res.set_content(cpp("httplib::hello_json(name)"), "application/json")
+
+
+def handle_routes(req: httplib.Request, res: &httplib.Response):
+    res.set_content(
+        "{\"routes\":[\"GET /\",\"GET /echo\",\"GET /health\",\"GET /routes\",\"GET /time\"]}",
+        "application/json",
+    )
+
+
+def main() -> i32:
+    app = httplib.Server()
+    app.Get("/", handle_index)
+    app.Get("/health", handle_health)
+    app.Get("/time", handle_time)
+    app.Get("/echo", handle_echo)
+    app.Get("/routes", handle_routes)
+    app.listen("127.0.0.1", parse_port())
+    return 0
