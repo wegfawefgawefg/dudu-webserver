@@ -32,25 +32,22 @@ def handle_request(request: Request) -> Response:
     if request.method != std.string("GET"):
         return response(405, std.string("application/json"), std.string("{\"error\":\"method_not_allowed\"}"))
 
-    if request.path == std.string("/"):
-        return response(200, std.string("text/html; charset=utf-8"), html_index())
-
-    if request.path == std.string("/health"):
-        return response(200, std.string("application/json"), std.string("{\"language\":\"Dudu\",\"ok\":true}"))
-
-    if request.path == std.string("/time"):
-        return response(200, std.string("application/json"), time_json())
-
-    if request.path == std.string("/echo"):
-        name = request.name
-        if name.empty():
-            name = std.string("somebody")
-        body = std.string("{\"message\":\"hello, ")
-        body += json_escape(name)
-        body += std.string("\"}")
-        return response(200, std.string("application/json"), body)
-
-    if request.path == std.string("/routes"):
-        return response(200, std.string("application/json"), std.string("{\"routes\":[\"GET /\",\"GET /echo\",\"GET /health\",\"GET /routes\",\"GET /time\"]}"))
-
-    return response(404, std.string("application/json"), std.string("{\"error\":\"not_found\"}"))
+    match request.path:
+        case "/":
+            return response(200, std.string("text/html; charset=utf-8"), html_index())
+        case "/health":
+            return response(200, std.string("application/json"), std.string("{\"language\":\"Dudu\",\"ok\":true}"))
+        case "/time":
+            return response(200, std.string("application/json"), time_json())
+        case "/echo":
+            name = request.name
+            if name.empty():
+                name = std.string("somebody")
+            body = std.string("{\"message\":\"hello, ")
+            body += json_escape(name)
+            body += std.string("\"}")
+            return response(200, std.string("application/json"), body)
+        case "/routes":
+            return response(200, std.string("application/json"), std.string("{\"routes\":[\"GET /\",\"GET /echo\",\"GET /health\",\"GET /routes\",\"GET /time\"]}"))
+        case _:
+            return response(404, std.string("application/json"), std.string("{\"error\":\"not_found\"}"))
