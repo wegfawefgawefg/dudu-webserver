@@ -1,9 +1,8 @@
 from server import make_server
 from server import parse_port
 from server import run_server
+import c "stdio.h" as stdio
 import c "unistd.h" as unistd
-import cpp "iostream" as std
-import cpp "string" as std
 
 
 def main() -> i32:
@@ -12,8 +11,8 @@ def main() -> i32:
     if server < 0:
         return 1
 
-    cpp("std::cout << \"dudu-webserver listening on http://127.0.0.1:\" << port << \"\\n\";")
-    cpp("std::cout << \"press Ctrl-C to stop\\n\";")
+    stdio.printf("dudu-webserver listening on http://127.0.0.1:%d\n", port)
+    stdio.printf("press Ctrl-C to stop\n")
     run_server(server)
     unistd.close(server)
     return 0

@@ -1,6 +1,5 @@
 from app import handle_request
 from request import parse_request
-from request import string_npos
 from response import serialize_response
 import c "arpa/inet.h" as inet
 import c "netinet/in.h" as net
@@ -15,7 +14,7 @@ import cpp "string" as std
 def parse_port() -> i32:
     port_text = c.getenv("PORT")
     if port_text != None:
-        parsed: i32 = cpp("std::atoi(port_text)")
+        parsed: i32 = c.atoi(cstr(port_text))
         if parsed > 0:
             return parsed
     return 8080
@@ -30,14 +29,14 @@ def read_http_request(fd: i32) -> std.string:
         if count <= 0:
             done = True
         else:
-            cpp("raw.append(buffer.data(), static_cast<std::size_t>(count));")
-            if raw.find(std.string("\r\n\r\n")) != string_npos():
+            raw += std.string(cstr(&buffer[0]), usize(count))
+            if raw.find(std.string("\r\n\r\n")) != std.string.npos:
                 done = True
     return raw
 
 
 def send_all(fd: i32, text: std.string):
-    cpp("::send(fd, static_cast<const void*>(text.c_str()), text.size(), MSG_NOSIGNAL);")
+    sock.send(fd, *const[void](text.c_str()), text.size(), sock.MSG_NOSIGNAL)
 
 
 def serve_client(fd: i32):
@@ -54,7 +53,7 @@ def make_server(port: i32) -> i32:
         return -1
 
     yes: i32 = 1
-    cpp("::setsockopt(server, SOL_SOCKET, SO_REUSEADDR, static_cast<const void*>(&yes), static_cast<socklen_t>(sizeof(yes)));")
+    sock.setsockopt(server, sock.SOL_SOCKET, sock.SO_REUSEADDR, *const[void](&yes), sock.socklen_t(sizeof[i32]()))
 
     address: net.sockaddr_in
     cstrlib.memset(&address, 0, sizeof[net.sockaddr_in]())
@@ -64,7 +63,7 @@ def make_server(port: i32) -> i32:
         unistd.close(server)
         return -1
 
-    bind_status: i32 = cpp("::bind(server, reinterpret_cast<sockaddr*>(&address), sizeof(address))")
+    bind_status: i32 = sock.bind(server, *const[sock.sockaddr](&address), sock.socklen_t(sizeof[net.sockaddr_in]()))
     if bind_status < 0:
         unistd.close(server)
         return -1
