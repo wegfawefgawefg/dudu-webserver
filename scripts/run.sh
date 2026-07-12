@@ -4,7 +4,6 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-DUDU="${DUDU:-/home/vega/.local/bin/dudu}"
 HOST="${HOST:-127.0.0.1}"
 PORT_WAS_SET="${PORT+x}"
 
@@ -29,4 +28,4 @@ if [[ -z "${PORT:-}" ]]; then
 fi
 
 printf '[run] starting dudu-webserver on http://%s:%s\n' "$HOST" "$PORT"
-exec env HOST="$HOST" PORT="$PORT" "$DUDU" run
+exec env HOST="$HOST" PORT="$PORT" dudu run "$@"

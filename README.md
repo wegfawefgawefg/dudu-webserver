@@ -26,11 +26,7 @@ src/response.dd  HTTP response serialization
 ./scripts/run.sh
 ```
 
-The scripts default to `/home/vega/.local/bin/dudu`. Override with:
-
-```bash
-DUDU=/path/to/dudu ./scripts/run.sh
-```
+The scripts use `dudu` from `PATH`.
 
 Routes:
 
@@ -44,8 +40,5 @@ Routes:
 
 ## Editor
 
-This repo includes `.vscode/settings.json` so VS Code associates `*.dd` with the Dudu language and uses:
-
-```text
-/home/vega/.local/bin/duc
-```
+This repo includes `.vscode/settings.json` so VS Code associates `*.dd` with
+the Dudu language. The extension resolves `dudu` and `dudu-lsp` from `PATH`.
